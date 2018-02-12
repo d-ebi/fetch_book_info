@@ -41,7 +41,7 @@ def main():
     dom2 = fetch_parsed_web_page(item_detail_url)
     print('書籍名      :' + dom2.xpath(amazon.xpaths['book_name'])[0].text)
     print('本の種別    :' + dom2.xpath(amazon.xpaths['classification'])[0].text)
-    print('発行年月日  :' + dom2.xpath(amazon.xpaths['issued_date'])[0].text) # HACK: windowsのための一時措置
+    print('発行年月日  :' + dom2.xpath(amazon.xpaths['issued_date'])[0].text)
     for author in dom2.xpath(amazon.xpaths['authors']):
         print('著者名      :' + author.text)
     print('金額        :' + dom2.xpath(amazon.xpaths['price'])[0].text)
