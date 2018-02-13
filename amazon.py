@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 import re
-import urllib.request, urllib.parse, urllib.error
+import urllib.error, urllib.parse,  urllib.request
 import sys
 import time
 
@@ -9,7 +9,7 @@ import lxml.html
 
 from web_pages import amazon
 
-def fetch_parsed_web_page(url, retry=3, charset='utf-8'):
+def fetch_parsed_web_page(url, retry=10, charset='utf-8'):
     request  = urllib.request.Request(url)
     http_error_count = 0
     sleep_time = 5
@@ -39,10 +39,10 @@ def main():
     # TODO: dom2は無いので変える,上と下で明らかに処理が違うので関数を分離
     dom2 = fetch_parsed_web_page(item_detail_url)
     print('URL         :' + item_detail_url)
+    print('画像URL     :' + amazon.extract_product_image(dom2))
     print('書籍名      :' + amazon.extract_product_name(dom2))
     print('本の種別    :' + amazon.extract_classification(dom2))
     print('発行年月日  :' + amazon.extract_issued_date(dom2))
-    print(dom2.xpath('//span[contains(@class, "author")]'))
     for author in amazon.extract_authors(dom2):
         print('著者名      :' + author)
     print('金額        :' + amazon.extract_price(dom2))

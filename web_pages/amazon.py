@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 
+import urllib.parse
 import re
 
 base_url = 'https://www.amazon.co.jp/s/ref=nb_sb_noss?__mk_ja_JP=%E3%82%AB%E3%82%BF%E3%82%AB%E3%83%8A&url=search-alias%3Daps&field-keywords={ISBN}'
@@ -10,7 +11,9 @@ def extract_search_results(dom, number=0):
     return extract.get('href') 
 
 def extract_product_image(dom):
-    pass
+    xpath = '//img[@id="imgBlkFront"]'
+    extract = dom.xpath(xpath)[0]
+    return extract.get('src')
 
 def extract_product_name(dom):
     xpath = '//span[@id="productTitle"]'
@@ -28,11 +31,15 @@ def extract_issued_date(dom):
     return re.search(r'(\d{4}/\d{1,2}/\d{1,2})', extract.text).group(1)
 
 def extract_authors(dom):
-    xpath = '//span[contains(@class, "author")]//a[contains(@href, "dp_byline_sr_book") or contains(@href, "dp_byline_cont_book")]'
+    xpath = '//span[contains(@class, "author")]//a[contains(@class, "a-link-normal")]'
     extract = dom.xpath(xpath)
     authors = list()
     for author in extract:
-        authors.apppend(author.text)
+        author_name_pattern  = r'field-author=(.+?)&'
+        author_name_searched = re.search(author_name_pattern, author.get('href'))
+        if author_name_searched:
+            author_name = author_name_searched.group(1)
+            authors.append(urllib.parse.unquote(author_name, 'utf-8').replace('+', ' '))
     return authors
         
 def extract_price(dom):
