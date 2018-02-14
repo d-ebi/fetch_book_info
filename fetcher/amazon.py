@@ -3,12 +3,26 @@
 import urllib.parse
 import re
 
-base_url = 'https://www.amazon.co.jp/s/ref=nb_sb_noss?__mk_ja_JP=%E3%82%AB%E3%82%BF%E3%82%AB%E3%83%8A&url=search-alias%3Daps&field-keywords={ISBN}'
+base_url = 'https://www.amazon.co.jp/s/ref=nb_sb_noss?__mk_ja_JP=%E3%82%AB%E3%82%BF%E3%82%AB%E3%83%8A&field-keywords={isbn}'
 
 def extract_search_results(dom, number=0):
     xpath = '//li[@id="result_{number}"]//a[contains(@class, "s-access-detail-page")]'.format(number = str(number))
     extract = dom.xpath(xpath)[0]
     return extract.get('href') 
+
+def extract_paper_book_url(dom):
+    xpath   = '//div[@id="tmmSwatches"]//a[@class="a-button-text"]'
+    extract = dom.xpath(xpath)
+    if len(extract) <= 1: return None
+    for book_type_toggle in extract:
+        if not 'Kindle版' in book_type_toggle.text_content():
+            href = book_type_toggle.get('href')
+            if 'javascript' in href:
+                return None
+            else:
+                return 'https://www.amazon.co.jp' + urllib.parse.quote(book_type_toggle.get('href'))
+    
+    return None
 
 def extract_product_image(dom):
     xpath = '//img[@id="imgBlkFront"]'
@@ -28,7 +42,7 @@ def extract_classification(dom):
 def extract_issued_date(dom):
     xpath = '//h1[@id="title"]/span[3]'
     extract = dom.xpath(xpath)[0]
-    return re.search(r'(\d{4}/\d{1,2}/\d{1,2})', extract.text).group(1)
+    return re.search(r'(\d{4}/\d{1,2}/\d{1,2}|\d{4}/\d{1,2})', extract.text).group(1)
 
 def extract_authors(dom):
     xpath = '//span[contains(@class, "author")]//a[contains(@class, "a-link-normal")]'
@@ -44,13 +58,19 @@ def extract_authors(dom):
         
 def extract_price(dom):
     xpath = '//div[@id="buyNewSection"]//span[contains(@class, "a-color-price")]'
-    extract = dom.xpath(xpath)[0]
-    return extract.text[2:].replace(',', '')
+    extract = dom.xpath(xpath)
+    if len(extract) > 0:
+        return extract[0].text[2:].replace(',', '')
+    else:
+        return ''
 
 def extract_recommended_degree(dom):
     xpath = '//div[@id="averageCustomerReviews"]//span[@class="a-icon-alt"]'
-    extract = dom.xpath(xpath)[0]
-    return extract.text.replace('5つ星のうち ', '')
+    extract = dom.xpath(xpath)
+    if len(extract) > 0:
+        return extract[0].text.replace('5つ星のうち ', '')
+    else:
+        return ''
 
 def extract_publisher(dom):
     xpath = '//div[@id="detail_bullets_id"]//*[contains(text(), "出版社")]'
@@ -68,28 +88,9 @@ def extract_categories(dom):
 
 def extract_number_of_pages(dom):
     xpath = '//div[@id="detail_bullets_id"]//*[contains(text(), "ページ")]'
-    extract = dom.xpath(xpath)[0]
-    return re.search(r'(\d+)ページ', extract.text_content()).group(1)
+    extract = dom.xpath(xpath)
+    if len(extract) > 0:
+        return re.search(r'(\d+)ページ', extract[0].text_content()).group(1)
+    else:
+        return ''
 
-xpaths = {
-    # numberは検索結果の何個目かを示す. 0オリジン.
-    'search_results_extract': '//li[@id="result_{number}"]//a[contains(@class, "s-access-detail-page")]',
-    # 書籍名
-    'book_name': '//span[@id="productTitle"]',
-    # 種別
-    'classification': '//h1[@id="title"]/span[2]',
-    # 発行年月日
-    'issued_date': '//h1[@id="title"]/span[3]',
-    # 著者名 HACK:このxpath,臭う
-    'authors': '//span[contains(@class, "author")]//a[contains(@href, "dp_byline_sr_book") or contains(@href, "dp_byline_cont_book")]',
-    # 金額
-    'price': '//div[@id="buyNewSection"]//span[contains(@class, "a-color-price")]', 
-    # おすすめ度
-    'recommended_degree': '//div[@id="averageCustomerReviews"]//span[@class="a-icon-alt"]',
-    # 出版社
-    'publisher': '//div[@id="detail_bullets_id"]//*[contains(text(), "出版社")]',
-    # カテゴリ階層
-    'categories': '//li[@id="SalesRank"]//span[@class="zg_hrsr_ladder"]',
-    # ページ数 TODO: 要検証
-    'number_of_pages': '//div[@id="detail_bullets_id"]//*[contains(text(), "ページ")]',
-}
