@@ -1,7 +1,12 @@
 # -*- coding: utf-8 -*-
 
+import json
 import urllib.parse
 import re
+import sys
+
+sys.path.append('../utils/')
+from utils import scraperlib
 
 base_url = 'https://www.amazon.co.jp/s/ref=nb_sb_noss?__mk_ja_JP=%E3%82%AB%E3%82%BF%E3%82%AB%E3%83%8A&field-keywords={isbn}'
 
@@ -21,7 +26,6 @@ def extract_paper_book_url(dom):
                 return None
             else:
                 return 'https://www.amazon.co.jp' + urllib.parse.quote(book_type_toggle.get('href'))
-    
     return None
 
 def extract_product_image(dom):
@@ -94,3 +98,69 @@ def extract_number_of_pages(dom):
     else:
         return ''
 
+def get_item_detail_url(isbn):
+    search_url = base_url.format(isbn=isbn)
+    search_results = scraperlib.fetch_page(search_url)
+    dom = scraperlib.parse_page(search_results)
+    item_detail_url = extract_search_results(dom)
+
+    return item_detail_url
+
+def get_paper_book_url(dom):
+    paper_book_url = extract_paper_book_url(dom)
+
+    if paper_book_url:
+        return paper_book_url
+
+def get_book_infos(dom):
+    '''
+    
+    @param http.client.HTTPResponse: httpレスポンスのオブジェクト
+    @return dict: 
+    '''
+    
+    results = dict()
+    results['product_img_url'] = extract_product_image(dom)
+    results['product_name'] = extract_product_name(dom)
+    results['classification'] = extract_classification(dom)
+    results['issued_date'] = extract_issued_date(dom)
+    results['authors'] = extract_authors(dom)
+    results['price'] = extract_price(dom)
+    results['recommended_degree'] = extract_recommended_degree(dom)
+    results['publisher'] = extract_publisher(dom)
+    results['categories'] = extract_categories(dom)
+    results['number_of_pages'] = extract_number_of_pages(dom)
+    
+    return results
+
+def scraping(isbn):
+    '''
+    ISBNコードを元に,書籍情報を取得する.
+    処理フローは下記である.
+    1. ISBNを元にAmazonで検索
+    2. 検索結果の商品詳細ページ情報を取得
+    3. Kindle版ページの場合,紙書籍の情報ページへ移動
+    4. 欲しい情報を取得
+    戻り値はJSON文字列.
+    
+    @param isbn str: isbnコード
+    @return str: json文字列
+    '''
+    
+    item_detail_url = get_item_detail_url(isbn)
+
+    item_detail_page = scraperlib.fetch_page(item_detail_url)
+    dom = scraperlib.parse_page(item_detail_page)
+
+    paper_book_url = extract_paper_book_url(dom)
+    if paper_book_url:
+        response = scraperlib.fetch_page(paper_book_url)
+        dom = scraperlib.parse_page(response)
+        item_detail_url = paper_book_url
+    
+    book_infos = get_book_infos(dom)
+    book_infos['isbn'] = isbn
+    book_infos['url']  = item_detail_url
+
+    formatted = json.dumps(book_infos, indent=4, ensure_ascii=False) 
+    return formatted

@@ -7,6 +7,7 @@ Webスクレイピングにおける,基本的な関数群を提供する.
 # built-in
 import http.client
 import json
+import random
 import re
 import urllib.error, urllib.parse,  urllib.request
 import sys
@@ -26,9 +27,18 @@ def fetch_page(url, retry=3, wait_time=10):
     @return http.client.HTTPResponse: httpレスポンスのオブジェクト
     '''
 
+    user_agents = [
+        'Mozilla/5.0 (compatible; MSIE 10.0; Windows NT 6.1; WOW64; Trident/6.0)',
+        'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_2) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/47.0.2526.106 Safari/537.36',
+        'Mozilla/5.0 (Macintosh; Intel Mac OS X 10.11; rv:43.0) Gecko/20100101 Firefox/43.0 ',
+        'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:24.0) Gecko/20100101 Firefox/24.0',
+        'Mozilla/5.0 (X11; FreeBSD amd64; rv:41.0) Gecko/20100101 Firefox/41.0',
+    ]
+
+    ua_index = random.randint(0, len(user_agents) -1)
     request = urllib.request.Request(url)
     opener  = urllib.request.build_opener()
-    opener.addheaders = [('User-agent', 'Mozilla/5.0 (Windows; U; Windows NT 5.1; ja; rv:1.9.2.3) Gecko/20100401 Firefox/3.6.3 ( .NET CLR 3.5.30729)')]
+    opener.addheaders = [('User-agent', user_agents[ua_index])]
 
     http_error_count = 0
     response = None
