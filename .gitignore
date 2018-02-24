@@ -3,3 +3,4 @@ __pycache__
 .python-version
 _build
 *.rst
+!index.rst
