@@ -6,9 +6,11 @@ import re
 import sys
 
 sys.path.append('../utils/')
+from utils import get_module_logger
 from utils import scraperlib
 
 base_url = 'https://www.amazon.co.jp/s/ref=nb_sb_noss?__mk_ja_JP=%E3%82%AB%E3%82%BF%E3%82%AB%E3%83%8A&field-keywords={isbn}'
+logger = get_module_logger(__name__)
 
 def extract_search_results(dom, number=0):
     xpath = '//li[@id="result_{number}"]//a[contains(@class, "s-access-detail-page")]'.format(number = str(number))
