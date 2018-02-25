@@ -13,11 +13,27 @@ base_url = 'https://www.amazon.co.jp/s/ref=nb_sb_noss?__mk_ja_JP=%E3%82%AB%E3%82
 logger = get_module_logger(__name__)
 
 def extract_search_results(dom, number=0):
+    '''
+    Args:
+        :dom (lxml.html.HtmlElement): HTMLの解釈済みDOM
+        :number (int): 検索結果の中から取得するアイテムのindex
+    Returns:
+        :str: 対象アイテムのリンクurl
+    '''
+    
     xpath = '//li[@id="result_{number}"]//a[contains(@class, "s-access-detail-page")]'.format(number = str(number))
     extract = dom.xpath(xpath)[0]
     return extract.get('href') 
 
 def extract_paper_book_url(dom):
+    '''
+    
+    Args:
+        :dom (lxml.html.HtmlElement): HTMLの解釈済みDOM
+    Returns:
+        :str: 紙版の商品URL
+    '''
+    
     xpath   = '//div[@id="tmmSwatches"]//a[@class="a-button-text"]'
     extract = dom.xpath(xpath)
     if len(extract) <= 1: return None
@@ -31,26 +47,68 @@ def extract_paper_book_url(dom):
     return None
 
 def extract_product_image(dom):
+    '''
+    
+    Args:
+        :dom (lxml.html.HtmlElement): HTMLの解釈済みDOM
+    Returns:
+        :str: 対象商品の画像URL
+    '''
+
     xpath = '//img[@id="imgBlkFront"]'
     extract = dom.xpath(xpath)[0]
-    return extract.get('src')
+    image_url_json = extract.get('data-a-dynamic-image')
+    image_urls = list(json.loads(image_url_json).keys())
+    return image_urls[0]
 
 def extract_product_name(dom):
+    '''
+    
+    Args:
+        :dom (lxml.html.HtmlElement): HTMLの解釈済みDOM
+    Returns:
+        :str: 対象商品の名称
+    '''
+
     xpath = '//span[@id="productTitle"]'
     extract = dom.xpath(xpath)[0]
     return extract.text
 
 def extract_classification(dom):
+    '''
+    
+    Args:
+        :dom (lxml.html.HtmlElement): HTMLの解釈済みDOM
+    Returns:
+        :str: 対象商品の分類（単行本,コミック等）
+    '''
+
     xpath ='//h1[@id="title"]/span[2]' 
     extract = dom.xpath(xpath)[0]
     return extract.text
 
 def extract_issued_date(dom):
+    '''
+    
+    Args:
+        :dom (lxml.html.HtmlElement): HTMLの解釈済みDOM
+    Returns:
+        :str: 発売日
+    '''
+
     xpath = '//h1[@id="title"]/span[3]'
     extract = dom.xpath(xpath)[0]
     return re.search(r'(\d{4}/\d{1,2}/\d{1,2}|\d{4}/\d{1,2})', extract.text).group(1)
 
 def extract_authors(dom):
+    '''
+    
+    Args:
+        :dom (lxml.html.HtmlElement): HTMLの解釈済みDOM
+    Returns:
+        :str: 著者
+    '''
+
     xpath = '//span[contains(@class, "author")]//a[contains(@class, "a-link-normal")]'
     extract = dom.xpath(xpath)
     authors = list()
@@ -63,6 +121,14 @@ def extract_authors(dom):
     return authors
         
 def extract_price(dom):
+    '''
+    
+    Args:
+        :dom (lxml.html.HtmlElement): HTMLの解釈済みDOM
+    Returns:
+        :str: 価格
+    '''
+
     xpath = '//div[@id="buyNewSection"]//span[contains(@class, "a-color-price")]'
     extract = dom.xpath(xpath)
     if len(extract) > 0:
@@ -71,6 +137,14 @@ def extract_price(dom):
         return ''
 
 def extract_recommended_degree(dom):
+    '''
+    
+    Args:
+        :dom (lxml.html.HtmlElement): HTMLの解釈済みDOM
+    Returns:
+        :str: 評価
+    '''
+
     xpath = '//div[@id="averageCustomerReviews"]//span[@class="a-icon-alt"]'
     extract = dom.xpath(xpath)
     if len(extract) > 0:
@@ -79,11 +153,27 @@ def extract_recommended_degree(dom):
         return ''
 
 def extract_publisher(dom):
+    '''
+    
+    Args:
+        :dom (lxml.html.HtmlElement): HTMLの解釈済みDOM
+    Returns:
+        :str: 出版社
+    '''
+
     xpath = '//div[@id="detail_bullets_id"]//*[contains(text(), "出版社")]'
     extract = dom.xpath(xpath)[0]
     return re.search(r' (.+?) \(.+?\)', extract.tail).group(1)
 
 def extract_categories(dom):
+    '''
+    
+    Args:
+        :dom (lxml.html.HtmlElement): HTMLの解釈済みDOM
+    Returns:
+        :str: カテゴリ
+    '''
+
     xpath = '//li[@id="SalesRank"]//span[@class="zg_hrsr_ladder"]'
     extract = dom.xpath(xpath)
     categories = list()
@@ -93,6 +183,14 @@ def extract_categories(dom):
     return categories
 
 def extract_number_of_pages(dom):
+    '''
+    
+    Args:
+        :dom (lxml.html.HtmlElement): HTMLの解釈済みDOM
+    Returns:
+        :str: ページ数
+    '''
+
     xpath = '//div[@id="detail_bullets_id"]//*[contains(text(), "ページ")]'
     extract = dom.xpath(xpath)
     if len(extract) > 0:
@@ -101,6 +199,14 @@ def extract_number_of_pages(dom):
         return ''
 
 def get_item_detail_url(isbn):
+    '''
+    
+    Args:
+        :isbn (str): ISBNコード
+    Returns:
+        :str: 対象のISBNコードを持つ書籍の商品URL
+    '''
+
     search_url = base_url.format(isbn=isbn)
     search_results = scraperlib.fetch_page(search_url)
     dom = scraperlib.parse_page(search_results)
@@ -109,6 +215,14 @@ def get_item_detail_url(isbn):
     return item_detail_url
 
 def get_paper_book_url(dom):
+    '''
+    
+    Args:
+        :dom (lxml.html.HtmlElement): HTMLの解釈済みDOM
+    Returns:
+        :str: 紙版のURL
+    '''
+
     paper_book_url = extract_paper_book_url(dom)
 
     if paper_book_url:
@@ -117,8 +231,10 @@ def get_paper_book_url(dom):
 def get_book_infos(dom):
     '''
     
-    @param http.client.HTTPResponse: httpレスポンスのオブジェクト
-    @return dict: 
+    Args:
+        :dom (http.client.HTTPResponse): httpレスポンスのオブジェクト
+    Returns:
+        :dict: 書籍情報の一覧
     '''
     
     results = dict()
@@ -139,14 +255,18 @@ def scraping(isbn):
     '''
     ISBNコードを元に,書籍情報を取得する.
     処理フローは下記である.
+    
     1. ISBNを元にAmazonで検索
     2. 検索結果の商品詳細ページ情報を取得
     3. Kindle版ページの場合,紙書籍の情報ページへ移動
     4. 欲しい情報を取得
+    
     戻り値はJSON文字列.
     
-    @param isbn str: isbnコード
-    @return str: json文字列
+    Args:
+        :isbn (str): isbnコード
+    Returns
+        :str: json文字列
     '''
     
     item_detail_url = get_item_detail_url(isbn)
