@@ -1,10 +1,12 @@
 # -*- coding: utf-8 -*-
 
+# built-in
 import json
 import urllib.parse
 import re
 import sys
 
+# my modules
 from scraping.error import ExtractError
 sys.path.append('../utils/')
 from utils import get_module_logger
