@@ -41,6 +41,9 @@ class BookDetailScraper():
 
     def __str__(self):
         '''
+        取得した情報を,JSON形式にする.
+        __str__をoverrideしているので,print(book_detail_scraper)などとすれば,
+        取得情報をJSON形式でprintする.
         
         Returns:
             :str: 書籍情報のJSON
