@@ -15,6 +15,11 @@ from utils import scraperlib
 logger = get_module_logger(__name__)
 
 class BookDetailScraper():
+    '''
+    本の情報を取得・保持するクラス.
+    scrapingを実行し,メンバ変数へ登録する.
+    '''
+
     def __init__(self, isbn, url):
         self.isbn = isbn
         self.url = url
