@@ -4,3 +4,4 @@ __pycache__
 _build
 *.rst
 !index.rst
+db
